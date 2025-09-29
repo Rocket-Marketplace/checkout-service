@@ -9,9 +9,10 @@ import { ProductsService } from '../services/products.service';
 import { PaymentsService } from '../services/payments.service';
 import { CartService } from '../cart/cart.service';
 import { Cart } from '../cart/entities/cart.entity';
+import { CircuitBreakerModule } from '../common/circuit-breaker/circuit-breaker.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, Cart]), HttpModule],
+  imports: [TypeOrmModule.forFeature([Order, OrderItem, Cart]), HttpModule, CircuitBreakerModule],
   controllers: [OrdersController],
   providers: [OrdersService, ProductsService, PaymentsService, CartService],
   exports: [OrdersService],

@@ -4,8 +4,8 @@ import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { databaseConfig } from './config/database.config';
-import { OrdersModule } from './orders/orders.module';
 import { CartModule } from './cart/cart.module';
+import { HealthModule } from './health/health.module';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 
 @Module({
@@ -19,8 +19,8 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '24h' },
     }),
-    OrdersModule,
     CartModule,
+    HealthModule,
   ],
   providers: [JwtStrategy],
 })

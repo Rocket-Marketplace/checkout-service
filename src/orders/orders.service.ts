@@ -5,12 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, OrderStatus } from './entities/order.entity';
+import { Order, OrderStatus, PaymentStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { CreateOrderDto } from '../common/dto/create-order.dto';
 import { ProductsService } from '../services/products.service';
 import { PaymentsService } from '../services/payments.service';
 import { CartService } from '../cart/cart.service';
+import { OrderConfirmedEvent } from '../events/order.events';
 
 @Injectable()
 export class OrdersService {
@@ -87,6 +88,8 @@ export class OrdersService {
       await this.orderItemRepository.save(orderItem);
     }
 
+    // TODO: Publish order created event when events system is ready
+
     try {
       const paymentResult = await this.paymentsService.processPayment({
         orderId: savedOrder.id,
@@ -96,10 +99,22 @@ export class OrdersService {
       });
 
       savedOrder.paymentId = paymentResult.paymentId;
-      savedOrder.paymentStatus = paymentResult.status;
+      savedOrder.paymentStatus = paymentResult.status as PaymentStatus;
       savedOrder.status = OrderStatus.CONFIRMED;
 
       await this.orderRepository.save(savedOrder);
+
+      // Publish order confirmed event
+      const orderConfirmedEvent: OrderConfirmedEvent = {
+        orderId: savedOrder.id,
+        buyerId,
+        sellerIds: [...new Set(orderItems.map(item => item.sellerId))],
+        totalAmount,
+        paymentId: paymentResult.paymentId,
+        confirmedAt: new Date(),
+      };
+
+      // TODO: Publish order confirmed event when events system is ready
 
       for (const item of items) {
         await this.productsService.updateStock(item.productId, item.quantity);
@@ -111,6 +126,8 @@ export class OrdersService {
     } catch (error) {
       savedOrder.status = OrderStatus.CANCELLED;
       await this.orderRepository.save(savedOrder);
+
+      // TODO: Publish order cancelled event when events system is ready
       throw error;
     }
   }
@@ -144,7 +161,7 @@ export class OrdersService {
 
   async updatePaymentStatus(id: string, paymentStatus: string): Promise<Order> {
     const order = await this.findOne(id);
-    order.paymentStatus = paymentStatus;
+    order.paymentStatus = paymentStatus as PaymentStatus;
     return await this.orderRepository.save(order);
   }
 }

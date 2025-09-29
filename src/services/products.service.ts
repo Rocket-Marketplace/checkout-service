@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { CircuitBreakerService } from '../common/circuit-breaker/circuit-breaker.service';
 
 export interface Product {
   id: string;
@@ -16,25 +17,26 @@ export class ProductsService {
   private readonly productsServiceUrl =
     process.env.PRODUCTS_SERVICE_URL || 'http://localhost:3001';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly circuitBreakerService: CircuitBreakerService,
+  ) {}
 
   async getProduct(productId: string): Promise<Product> {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(
-          `${this.productsServiceUrl}/products/${productId}`,
-        ),
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new HttpException('Product not found', HttpStatus.NOT_FOUND);
-      }
-      throw new HttpException(
-        'Failed to fetch product',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.circuitBreakerService.executeWithCircuitBreaker(
+      async () => {
+        const response = await firstValueFrom(
+          this.httpService.get(
+            `${this.productsServiceUrl}/products/${productId}`,
+          ),
+        );
+        return response.data;
+      },
+      async () => {
+        throw new HttpException('Products service unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+      },
+      `getProduct-${productId}`
+    );
   }
 
   async validateProducts(productIds: string[]): Promise<Product[]> {
@@ -45,23 +47,22 @@ export class ProductsService {
   }
 
   async updateStock(productId: string, quantity: number): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.httpService.patch(
-          `${this.productsServiceUrl}/products/${productId}/stock`,
-          {
-            quantity: -quantity,
-          },
-        ),
-      );
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        throw new HttpException('Insufficient stock', HttpStatus.BAD_REQUEST);
-      }
-      throw new HttpException(
-        'Failed to update stock',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.circuitBreakerService.executeWithCircuitBreaker(
+      async () => {
+        const response = await firstValueFrom(
+          this.httpService.patch(
+            `${this.productsServiceUrl}/products/${productId}/stock`,
+            {
+              quantity: -quantity,
+            },
+          ),
+        );
+        return response.data;
+      },
+      async () => {
+        throw new HttpException('Products service unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+      },
+      `updateStock-${productId}`
+    );
   }
 }

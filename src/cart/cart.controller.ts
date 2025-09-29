@@ -21,11 +21,12 @@ import {
 import { CartService } from './cart.service';
 import { AddToCartDto } from '../common/dto/add-to-cart.dto';
 import { UpdateCartDto } from '../common/dto/update-cart.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CheckoutDto } from '../common/dto/checkout.dto';
+import { SessionAuthGuard } from '../auth/guards/session-auth.guard';
 
 @ApiTags('Cart')
 @Controller('cart')
-@UseGuards(JwtAuthGuard)
+@UseGuards(SessionAuthGuard)
 @ApiBearerAuth()
 export class CartController {
   constructor(private readonly cartService: CartService) {}
@@ -59,6 +60,18 @@ export class CartController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getCartTotal(@Request() req: { user: { id: string } }) {
     return this.cartService.getCartTotal(req.user.id);
+  }
+
+  @Post('checkout')
+  @ApiOperation({ summary: 'Process checkout and create payment order' })
+  @ApiResponse({ status: 201, description: 'Checkout processed successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async checkout(
+    @Request() req: { user: { id: string } },
+    @Body() checkoutDto: CheckoutDto,
+  ) {
+    return this.cartService.processCheckout(req.user.id, checkoutDto);
   }
 
   @Patch(':productId')

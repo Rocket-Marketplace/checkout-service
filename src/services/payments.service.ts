@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { CircuitBreakerService } from '../common/circuit-breaker/circuit-breaker.service';
 
 export interface PaymentRequest {
   orderId: string;
@@ -20,30 +21,28 @@ export class PaymentsService {
   private readonly paymentsServiceUrl =
     process.env.PAYMENTS_SERVICE_URL || 'http://localhost:3004';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly circuitBreakerService: CircuitBreakerService,
+  ) {}
 
   async processPayment(
     paymentRequest: PaymentRequest,
   ): Promise<PaymentResponse> {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.paymentsServiceUrl}/payments/process`,
-          paymentRequest,
-        ),
-      );
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        throw new HttpException(
-          error.response.data.message || 'Payment failed',
-          HttpStatus.BAD_REQUEST,
+    return this.circuitBreakerService.executeWithCircuitBreaker(
+      async () => {
+        const response = await firstValueFrom(
+          this.httpService.post(
+            `${this.paymentsServiceUrl}/payments/process`,
+            paymentRequest,
+          ),
         );
-      }
-      throw new HttpException(
-        'Payment service unavailable',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
+        return response.data;
+      },
+      async () => {
+        throw new HttpException('Payment service unavailable', HttpStatus.SERVICE_UNAVAILABLE);
+      },
+      `processPayment-${paymentRequest.orderId}`
+    );
   }
 }

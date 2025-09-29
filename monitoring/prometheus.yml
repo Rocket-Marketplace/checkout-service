@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'checkout-service'
+    static_configs:
+      - targets: ['localhost:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'checkout-service-dependencies'
+    static_configs:
+      - targets: ['localhost:3001']  # Products Service
+      - targets: ['localhost:3004']  # Payments Service
+    metrics_path: '/health'
+    scrape_interval: 10s
