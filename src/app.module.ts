@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { databaseConfig } from './config/database.config';
 import { CartModule } from './cart/cart.module';
 import { HealthModule } from './health/health.module';
+import { MessagingModule } from './messaging/messaging.module';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 
 @Module({
@@ -21,6 +22,7 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
     }),
     CartModule,
     HealthModule,
+    MessagingModule,
   ],
   providers: [JwtStrategy],
 })

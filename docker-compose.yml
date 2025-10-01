@@ -28,7 +28,8 @@ services:
       - JWT_SECRET=your-secret-key
       - USERS_SERVICE_URL=http://users-service:3000
       - PRODUCTS_SERVICE_URL=http://products-service:3001
-      - MESSAGING_SERVICE_URL=http://messaging-service:3005
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq-server-ip:5672
+      - RABBITMQ_MANAGEMENT_URL=http://rabbitmq-server-ip:15672
     ports:
       - "3003:3003"
     depends_on:
