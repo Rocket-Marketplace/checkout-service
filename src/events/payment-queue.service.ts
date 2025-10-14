@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessagingClientService } from './messaging-client.service';
+import { RabbitMQService } from './rabbitmq.service';
 
 export interface PaymentOrderMessage {
   orderId: string;
@@ -18,18 +18,23 @@ export interface PaymentOrderMessage {
 export class PaymentQueueService {
   private readonly logger = new Logger(PaymentQueueService.name);
   private readonly ROUTING_KEY = 'payment.order';
+  private readonly EXCHANGE = 'payments';
 
-  constructor(private readonly messagingClientService: MessagingClientService) {}
+  constructor(private readonly rabbitMQService: RabbitMQService) {}
 
   async publishPaymentOrder(paymentOrder: PaymentOrderMessage): Promise<void> {
     this.logger.log(`Publishing payment order for orderId: ${paymentOrder.orderId}`);
     
-    await this.messagingClientService.publishMessage(
-      this.ROUTING_KEY,
-      'payment_order',
-      paymentOrder,
-      'checkout-service',
-      'payments-service'
-    );
+    try {
+      await this.rabbitMQService.publishMessage(
+        this.EXCHANGE,
+        this.ROUTING_KEY,
+        paymentOrder
+      );
+      this.logger.log(`Payment order published successfully: ${paymentOrder.orderId}`);
+    } catch (error) {
+      this.logger.error(`Failed to publish payment order: ${paymentOrder.orderId}`, error);
+      throw error;
+    }
   }
 }

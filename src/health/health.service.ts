@@ -18,7 +18,6 @@ export class HealthService {
     const checks = await Promise.allSettled([
       this.checkDatabase(),
       this.checkProductsService(),
-      this.checkPaymentsService(),
       this.checkRabbitMQ(),
     ]);
 
@@ -28,8 +27,7 @@ export class HealthService {
       checks: {
         database: this.formatCheckResult(checks[0], 'Database'),
         productsService: this.formatCheckResult(checks[1], 'Products Service'),
-        paymentsService: this.formatCheckResult(checks[2], 'Payments Service'),
-        rabbitMQ: this.formatCheckResult(checks[3], 'RabbitMQ'),
+        rabbitMQ: this.formatCheckResult(checks[2], 'RabbitMQ'),
       },
     };
 
@@ -99,19 +97,6 @@ export class HealthService {
     } catch (error) {
       this.logger.error('Products service health check failed:', error);
       return { status: 'unhealthy', message: 'Products service is unreachable', error: error.message };
-    }
-  }
-
-  private async checkPaymentsService() {
-    try {
-      const paymentsServiceUrl = process.env.PAYMENTS_SERVICE_URL || 'http://localhost:3004';
-      await firstValueFrom(
-        this.httpService.get(`${paymentsServiceUrl}/health`, { timeout: 5000 })
-      );
-      return { status: 'healthy', message: 'Payments service is reachable' };
-    } catch (error) {
-      this.logger.error('Payments service health check failed:', error);
-      return { status: 'unhealthy', message: 'Payments service is unreachable', error: error.message };
     }
   }
 

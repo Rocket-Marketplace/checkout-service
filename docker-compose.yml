@@ -26,10 +26,10 @@ services:
       - DB_PASSWORD=postgres
       - DB_DATABASE=checkout_db
       - JWT_SECRET=your-secret-key
-      - USERS_SERVICE_URL=http://users-service:3000
-      - PRODUCTS_SERVICE_URL=http://products-service:3001
-      - RABBITMQ_URL=amqp://admin:admin@rabbitmq-server-ip:5672
-      - RABBITMQ_MANAGEMENT_URL=http://rabbitmq-server-ip:15672
+      - USERS_SERVICE_URL=http://host.docker.internal:3000
+      - PRODUCTS_SERVICE_URL=http://host.docker.internal:3001
+      - RABBITMQ_URL=amqp://admin:admin@host.docker.internal:5672
+      - RABBITMQ_MANAGEMENT_URL=http://host.docker.internal:15672
     ports:
       - "3003:3003"
     depends_on:
