@@ -7,12 +7,12 @@ import { Cart } from './entities/cart.entity';
 import { ProductsService } from '../services/products.service';
 import { CircuitBreakerModule } from '../common/circuit-breaker/circuit-breaker.module';
 import { EventsModule } from '../events/events.module';
-import { SessionValidationService } from '../auth/session-validation.service';
+// import { SessionValidationService } from '../auth/session-validation.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Cart]), HttpModule, CircuitBreakerModule, EventsModule],
   controllers: [CartController],
-  providers: [CartService, ProductsService, SessionValidationService],
+  providers: [CartService, ProductsService],
   exports: [CartService],
 })
 export class CartModule {}

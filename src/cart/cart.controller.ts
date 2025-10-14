@@ -31,19 +31,18 @@ export class CartController {
   @ApiResponse({ status: 201, description: 'Item added to cart successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   async addToCart(
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
     @Body() addToCartDto: AddToCartDto,
   ) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.addToCart(userId, addToCartDto);
+    return this.cartService.addToCart(req.user.id, addToCartDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get user cart' })
   @ApiResponse({ status: 200, description: 'Cart retrieved successfully' })
-  async getCart(@Request() req: any) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.getCart(userId);
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getCart(@Request() req: { user: { id: string } }) {
+    return this.cartService.getCart(req.user.id);
   }
 
   @Get('total')
@@ -52,21 +51,21 @@ export class CartController {
     status: 200,
     description: 'Cart total calculated successfully',
   })
-  async getCartTotal(@Request() req: any) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.getCartTotal(userId);
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getCartTotal(@Request() req: { user: { id: string } }) {
+    return this.cartService.getCartTotal(req.user.id);
   }
 
   @Post('checkout')
   @ApiOperation({ summary: 'Process checkout and create payment order' })
   @ApiResponse({ status: 201, description: 'Checkout processed successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async checkout(
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
     @Body() checkoutDto: CheckoutDto,
   ) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.processCheckout(userId, checkoutDto);
+    return this.cartService.processCheckout(req.user.id, checkoutDto);
   }
 
   @Patch(':productId')
@@ -76,13 +75,12 @@ export class CartController {
   @ApiResponse({ status: 404, description: 'Cart item not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateCartItem(
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
     @Param('productId') productId: string,
     @Body() updateCartDto: UpdateCartDto,
   ) {
-    const userId = req.headers['x-user-id'];
     return this.cartService.updateCartItem(
-      userId,
+      req.user.id,
       productId,
       updateCartDto,
     );
@@ -97,20 +95,20 @@ export class CartController {
     description: 'Item removed from cart successfully',
   })
   @ApiResponse({ status: 404, description: 'Cart item not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeFromCart(
-    @Request() req: any,
+    @Request() req: { user: { id: string } },
     @Param('productId') productId: string,
   ) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.removeFromCart(userId, productId);
+    return this.cartService.removeFromCart(req.user.id, productId);
   }
 
   @Delete()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Clear cart' })
   @ApiResponse({ status: 204, description: 'Cart cleared successfully' })
-  async clearCart(@Request() req: any) {
-    const userId = req.headers['x-user-id'];
-    return this.cartService.clearCart(userId);
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async clearCart(@Request() req: { user: { id: string } }) {
+    return this.cartService.clearCart(req.user.id);
   }
 }
